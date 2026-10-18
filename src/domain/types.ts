@@ -102,7 +102,23 @@ export interface PredictionEdit {
   date?: string
 }
 
-/** A hypothetical purchase or transfer under evaluation. */
+/**
+ * What a hypothetical scenario is. Both kinds are the same cash event — money
+ * leaving the account on a date — and are calculated identically. The kind only
+ * changes how the event is described to the user.
+ */
+export type ScenarioKind = 'purchase' | 'investment'
+
+/**
+ * Descriptive metadata on a hypothetical investment.
+ *
+ * This is a label, nothing more. It never reaches a calculation: FinAhead has
+ * no view on what any asset class does, and modelling one would be a
+ * prediction it cannot support.
+ */
+export type InvestmentCategory = 'stock' | 'etf' | 'crypto' | 'other'
+
+/** A hypothetical purchase, transfer or investment under evaluation. */
 export interface Scenario {
   /**
    * Magnitude as the user typed it. Always entered as a positive number in the
@@ -111,6 +127,10 @@ export interface Scenario {
   amount: number
   date: string
   label?: string
+  /** Defaults to 'purchase' when absent. */
+  kind?: ScenarioKind
+  /** Present only for investments, and descriptive only. */
+  category?: InvestmentCategory
 }
 
 /** Why a forecast event exists. */
@@ -135,6 +155,10 @@ export interface ForecastEvent {
   /** Links a timeline row back to the prediction that produced it. */
   predictedEventId?: string
   isPrimaryIncome: boolean
+  /** Set only on a scenario row, so the UI can describe it accurately. */
+  scenarioKind?: ScenarioKind
+  /** Set only on an investment row. Descriptive; never used in arithmetic. */
+  scenarioCategory?: InvestmentCategory
 }
 
 export type ForecastWarningCode =

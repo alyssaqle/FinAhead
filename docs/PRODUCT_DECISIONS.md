@@ -190,3 +190,95 @@ Initial metrics for the first five interviews:
 With n=5, these are qualitative signals, not statistics. The most informative
 are (1), because it tests whether the core number is legible at all, and (5),
 because it is the only direct evidence about prediction quality.
+
+---
+
+# Investment Preflight
+
+An optional branch off the cash forecast, added after the V1 flow was working.
+
+## Target user
+
+The same college student or recent graduate, at a specific moment: they have
+$50–$500 they are thinking of putting into a brokerage or exchange app for the
+first time, and they have bills between now and payday. They are not choosing
+between assets — they have usually already decided *what* — they are deciding
+*whether now*, and they have no way to see what that money is still on the hook
+for.
+
+## Problem hypothesis
+
+The apps that take the money are very good at the moment of transfer and silent
+about everything downstream of it. A first-time investor sees the amount leave
+one balance and appear in another, and nothing anywhere connects that to the
+rent due in nine days. The hypothesis is that the useful intervention is not
+advice about the investment — it is making the *cash consequence* visible in the
+same place they already read their runway.
+
+This is a hypothesis. It has not been tested with anyone.
+
+## Why a preflight rather than a trading simulator
+
+A simulator answers "what might this be worth?" That question requires a view on
+market behaviour, which FinAhead does not have and should not fake. Any number
+it produced would be a prediction dressed as a feature, and a first-time
+investor is exactly the person least equipped to discount it.
+
+A preflight answers a question FinAhead *can* answer from data the user already
+gave it: if this money leaves today, what else does it still have to cover? The
+cash side is arithmetic over their own transactions, and it reuses the existing
+scenario engine unchanged — a hypothetical investment is the same outflow as a
+hypothetical purchase.
+
+The value side is deliberately the crudest thing that is still honest: four
+fixed decline levels, no probabilities, no time horizon, no asset-specific
+behaviour. It exists to make one point — that the money can be worth less and
+the bills stay the same — and it is kept visually and structurally separate from
+the cash runway so the two are never read as one number. The category field is
+descriptive metadata and never reaches a calculation, because FinAhead has no
+basis for treating crypto differently from an ETF.
+
+## What remains unvalidated
+
+Everything about whether this is wanted. Specifically:
+
+- Whether students facing this decision would look for a tool at all, rather
+  than just transferring the money.
+- Whether the cash consequence is the part they find unclear, or whether they
+  already know it and the anxiety is elsewhere.
+- Whether four decline levels read as "this can go down" or as a prediction that
+  it will, which would be a failure.
+- Whether keeping cash and hypothetical value apart actually lands, or whether
+  users mentally add them back together.
+- Whether $50–$500 is the right range, or whether the real moment is smaller and
+  more frequent.
+- Whether offering this at all makes FinAhead feel like it is nudging toward
+  investing, which would undermine the product's stance.
+
+No user research has been carried out on this feature. Nothing here should be
+cited as validated.
+
+## Suggested research metrics
+
+1. **Discovery** — share of forecast-screen sessions that open the preflight
+   without prompting.
+2. **Comprehension** — after using it, can the participant state, unprompted,
+   both their post-investment low *and* that the stress levels are not
+   predictions? Failing the second half is the signal that matters.
+3. **Separation** — asked "how much money do you have," do they answer with the
+   cash low, or with cash plus hypothetical value?
+4. **Amount realism** — distribution of entered amounts against the $50–$500
+   assumption.
+5. **Decision change** — self-reported, whether seeing it changed the amount or
+   the timing. Reported as a qualitative signal, never as a conversion rate.
+6. **Perceived stance** — does the feature read as neutral, encouraging, or
+   discouraging? A product that reads as encouraging has drifted.
+
+## Explicit MVP exclusions
+
+Not built, and not to be added without evidence: recurring or scheduled
+investments, live or historical prices, real or simulated returns, gains,
+dividends, fees, taxes, settlement, selling, withdrawal, portfolio tracking,
+asset comparison, risk scoring, time horizons, probability or confidence
+figures, brokerage or bank connectivity, and any recommendation about whether,
+what, or how much to invest.

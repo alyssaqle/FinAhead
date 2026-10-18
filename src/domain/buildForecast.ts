@@ -143,20 +143,38 @@ function toForecastEvent(prediction: PredictedEvent): ForecastEvent {
 /**
  * Convert a scenario into a timeline event. The amount the user typed is a
  * magnitude; it always becomes an outflow.
+ *
+ * A hypothetical investment is the same cash event as a hypothetical purchase —
+ * money leaves the account on a date — so it takes the same path through the
+ * engine. Only the wording differs, and the category is carried along purely so
+ * the UI can describe the row; it never enters a calculation.
  */
 export function scenarioToForecastEvent(scenario: Scenario): ForecastEvent {
+  const kind = scenario.kind ?? 'purchase'
+  const trimmed = scenario.label?.trim()
+
+  const label =
+    kind === 'investment'
+      ? trimmed
+        ? `${trimmed} (hypothetical investment)`
+        : 'Hypothetical investment'
+      : trimmed
+        ? `${trimmed} (what-if)`
+        : 'Hypothetical purchase (what-if)'
+
   return {
     id: SCENARIO_EVENT_ID,
     date: scenario.date,
-    label: scenario.label?.trim()
-      ? `${scenario.label.trim()} (what-if)`
-      : 'Hypothetical purchase (what-if)',
+    label,
     amount: -Math.abs(roundMoney(scenario.amount)),
     kind: 'expense',
     source: 'scenario',
     isPrediction: false,
     balanceAfter: 0,
     isPrimaryIncome: false,
+    // Only attached for investments, so existing purchase events are unchanged.
+    ...(kind === 'investment' ? { scenarioKind: kind } : {}),
+    ...(scenario.category ? { scenarioCategory: scenario.category } : {}),
   }
 }
 

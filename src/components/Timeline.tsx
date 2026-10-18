@@ -68,7 +68,11 @@ export function Timeline({ forecast, highlightScenario = false }: TimelineProps)
                   <span className="badge badge-blue">Predicted</span>
                 ) : null}
                 {isScenario ? (
-                  <span className="badge badge-amber">What-if</span>
+                  <span className="badge badge-amber">
+                    {event.scenarioKind === 'investment'
+                      ? 'Hypothetical investment'
+                      : 'What-if'}
+                  </span>
                 ) : null}
               </span>
               {isLowPoint ? (

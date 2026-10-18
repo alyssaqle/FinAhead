@@ -48,7 +48,19 @@ export function CashRunwayChart({
   const headingId = useId()
   const plotRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(FALLBACK_WIDTH)
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  /*
+   * What made the current selection, not just which point is selected.
+   *
+   * The three inputs have to be dismissed differently: a mouse selection ends
+   * when the mouse leaves, a keyboard selection ends when focus leaves, and a
+   * tap persists until the next tap. Without the source, a synthetic mouse
+   * `pointerleave` — which fires whenever the layout shifts under a stationary
+   * cursor — silently cancels a selection the user made by tapping.
+   */
+  const [selection, setSelection] = useState<
+    { index: number; source: 'pointer' | 'focus' } | null
+  >(null)
+  const activeIndex = selection?.index ?? null
 
   // Measure so markers stay circular and the hit targets line up exactly with
   // the drawn points at any width.
@@ -64,7 +76,23 @@ export function CashRunwayChart({
 
   // A scenario being added or removed changes the points underneath; drop any
   // selection rather than leaving it pointing at a different event.
-  useEffect(() => setActiveIndex(null), [series])
+  useEffect(() => setSelection(null), [series])
+
+  /*
+   * Touch needs an explicit way to deselect. `pointerleave` cannot do it: after
+   * a tap the browser fires it for the touch pointer itself, which would clear
+   * the selection the tap just made — non-deterministically, depending on when
+   * the event lands. So leave-to-reset is limited to mouse pointers, and a tap
+   * outside the plot resets instead.
+   */
+  useEffect(() => {
+    if (activeIndex === null) return
+    function onPointerDown(event: PointerEvent) {
+      if (!plotRef.current?.contains(event.target as Node)) setSelection(null)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [activeIndex])
 
   const height = HEIGHT[variant]
   const padX = PAD_X[variant]
@@ -221,20 +249,40 @@ export function CashRunwayChart({
           {points.map((point, index) => {
             const isActive = index === shownIndex
             const isNamed = point.isLowPoint || point.isPayday || index === 0
-            return (
-              <circle
-                key={point.id}
-                className="runway__dot"
-                cx={coords[index].x}
-                cy={coords[index].y}
-                r={isActive ? 6.5 : isNamed ? 5 : 3.5}
-                data-low={point.isLowPoint}
-                data-payday={point.isPayday}
-                data-scenario={point.isScenario}
-                data-active={isActive}
-                data-negative={point.balance < 0}
-              />
-            )
+            const radius = isActive ? 6.5 : isNamed ? 5 : 3.5
+            const { x: cx, y: cy } = coords[index]
+            const marks = {
+              className: 'runway__dot',
+              'data-low': point.isLowPoint,
+              'data-payday': point.isPayday,
+              'data-scenario': point.isScenario,
+              'data-scenario-kind': point.scenarioKind,
+              'data-active': isActive,
+              'data-negative': point.balance < 0,
+            }
+
+            /*
+             * A hypothetical investment gets a diamond rather than a circle, so
+             * it is distinguishable by shape and not only by colour. Its text
+             * label carries the same information in the timeline and in the
+             * point's accessible name.
+             */
+            if (point.scenarioKind === 'investment') {
+              const size = radius * 1.8
+              return (
+                <rect
+                  key={point.id}
+                  {...marks}
+                  x={cx - size / 2}
+                  y={cy - size / 2}
+                  width={size}
+                  height={size}
+                  transform={`rotate(45 ${cx} ${cy})`}
+                />
+              )
+            }
+
+            return <circle key={point.id} {...marks} cx={cx} cy={cy} r={radius} />
           })}
 
           {axisLabels.map((label) => (
@@ -259,11 +307,16 @@ export function CashRunwayChart({
         */}
         <div
           className="runway__hits"
-          onPointerLeave={() => setActiveIndex(null)}
+          onPointerLeave={(event) => {
+            // A mouse leaving only ends a selection the mouse itself made.
+            if (event.pointerType !== 'mouse') return
+            setSelection((current) =>
+              current?.source === 'pointer' ? null : current,
+            )
+          }}
           onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-              setActiveIndex(null)
-            }
+            if (event.currentTarget.contains(event.relatedTarget as Node)) return
+            setSelection((current) => (current?.source === 'focus' ? null : current))
           }}
         >
           {points.map((point, index) => (
@@ -284,9 +337,17 @@ export function CashRunwayChart({
                * would open the forecast with an arbitrary point selected
                * instead of the projected low.
                */
-              onPointerMove={() => setActiveIndex(index)}
-              onFocus={() => setActiveIndex(index)}
-              onClick={() => setActiveIndex(index)}
+              /*
+               * Movement rather than `pointerenter`: arriving with the mouse at
+               * rest over a button would otherwise preselect a point. Restricted
+               * to mouse so a touch drag does not hijack a tap.
+               */
+              onPointerMove={(event) => {
+                if (event.pointerType !== 'mouse') return
+                setSelection({ index, source: 'pointer' })
+              }}
+              onFocus={() => setSelection({ index, source: 'focus' })}
+              onClick={() => setSelection({ index, source: 'focus' })}
             >
               <span className="runway__hit-ring" aria-hidden="true" />
             </button>

@@ -500,6 +500,12 @@
   border-top: 1px solid var(--border);
 }
 
+.fc-hero__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .fc-hero__explain {
   font-size: 15px;
   color: var(--text-secondary);
@@ -543,6 +549,12 @@
   font-size: 15px;
   color: var(--text-secondary);
   font-weight: 550;
+}
+
+.fc-hero__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .fc-hero__explain {
@@ -1372,6 +1384,12 @@
   stroke: var(--amber);
 }
 
+/* The investment marker is a diamond, so shape distinguishes it as well as
+   colour; a text label carries the same meaning in the timeline. */
+rect.runway__dot {
+  stroke-width: 2;
+}
+
 .runway__dot[data-negative='true'] {
   stroke: var(--red);
   fill: var(--red);
@@ -1503,4 +1521,67 @@
   flex-direction: column;
   gap: var(--space-4);
   border-radius: var(--radius-surface);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Investment Preflight — hypothetical value stress table                  */
+/* ---------------------------------------------------------------------- */
+
+.stress {
+  padding: 0;
+  overflow: hidden;
+}
+
+.stress__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.stress__table th,
+.stress__table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.stress__table thead th {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-sunken);
+}
+
+.stress__table tbody th {
+  font-weight: 600;
+}
+
+.stress__table tbody tr:last-child th,
+.stress__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* The no-change row is the reference point, not a "good" outcome. */
+.stress__table tbody tr[data-baseline='true'] th,
+.stress__table tbody tr[data-baseline='true'] td {
+  background: var(--surface-sunken);
+}
+
+.stress__num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .stress__table th,
+  .stress__table td {
+    padding: var(--space-3);
+  }
+
+  .stress__table thead th:last-child,
+  .stress__table tbody td:last-child {
+    display: none;
+  }
 }

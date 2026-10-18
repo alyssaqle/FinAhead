@@ -19,6 +19,7 @@ import { LandingPage } from './screens/LandingPage'
 import { SetupScreen } from './screens/SetupScreen'
 import { ForecastScreen } from './screens/ForecastScreen'
 import { ScenarioScreen } from './screens/ScenarioScreen'
+import { InvestmentScreen } from './screens/InvestmentScreen'
 
 interface SessionData {
   source: 'demo' | 'csv'
@@ -61,6 +62,9 @@ function AppShell({ route }: { route: ReturnType<typeof useRoute> }) {
     amount: number
   } | null>(null)
   const [scenario, setScenario] = useState<Scenario | null>(null)
+  // Kept separate from the purchase scenario so each branch compares against
+  // the same untouched forecast.
+  const [investment, setInvestment] = useState<Scenario | null>(null)
 
   const startSession = useCallback((next: SessionData) => {
     setSession(next)
@@ -68,6 +72,7 @@ function AppShell({ route }: { route: ReturnType<typeof useRoute> }) {
     setRejectedIds([])
     setManualIncome(null)
     setScenario(null)
+    setInvestment(null)
     setStage('forecast')
   }, [])
 
@@ -210,6 +215,16 @@ function AppShell({ route }: { route: ReturnType<typeof useRoute> }) {
             onSetManualIncome={(date, amount) => setManualIncome({ date, amount })}
             onClearManualIncome={() => setManualIncome(null)}
             onStartScenario={() => goToStage('scenario')}
+            onStartInvestment={() => goToStage('investment')}
+          />
+        ) : null}
+
+        {stage === 'investment' && session ? (
+          <InvestmentScreen
+            forecastInput={forecastInput}
+            investment={investment}
+            onInvestmentChange={setInvestment}
+            onBack={() => goToStage('forecast')}
           />
         ) : null}
 
@@ -233,6 +248,7 @@ function AppShell({ route }: { route: ReturnType<typeof useRoute> }) {
                 setRejectedIds([])
                 setManualIncome(null)
                 setScenario(null)
+                setInvestment(null)
                 setStage('setup')
               }}
             >

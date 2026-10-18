@@ -10,7 +10,13 @@
  * that come off the balance, the low point, then payday.
  */
 
-import type { ForecastResult } from './types'
+import type {
+  ForecastEvent,
+  ForecastResult,
+  InvestmentCategory,
+  ScenarioKind,
+} from './types'
+import { CATEGORY_LABELS } from './investmentStress'
 import { formatCurrency } from './money'
 import { formatDisplayDate } from './dateUtils'
 
@@ -31,6 +37,10 @@ export interface RunwayPoint {
   isLowPoint: boolean
   isPayday: boolean
   isScenario: boolean
+  /** Set only on a scenario point, so the chart can vary the marker shape. */
+  scenarioKind?: ScenarioKind
+  /** Set only on an investment point. Descriptive; never used in arithmetic. */
+  scenarioCategory?: InvestmentCategory
   /** Headline shown above the amount, e.g. "Balance after rent". */
   headline: string
   /** One-line description under the amount, e.g. "Sep 20 · Rent −$1,150.00". */
@@ -62,9 +72,14 @@ function headlineFor(
   kind: RunwayPointKind,
   label: string,
   isScenario: boolean,
+  scenarioKind?: ScenarioKind,
 ): string {
   if (kind === 'start') return 'Balance today'
-  if (isScenario) return 'Balance after this purchase'
+  if (isScenario) {
+    return scenarioKind === 'investment'
+      ? 'Cash balance after this investment'
+      : 'Balance after this purchase'
+  }
   if (kind === 'income') return 'Balance after expected income'
   return label.length <= MAX_HEADLINE_LABEL
     ? `Balance after ${label}`
@@ -76,24 +91,33 @@ function spokenAmount(amount: number): string {
   return `${amount < 0 ? 'negative ' : 'positive '}${formatCurrency(Math.abs(amount))}`
 }
 
-function describe(
-  date: string,
-  label: string,
-  amount: number,
-  balance: number,
-  kind: RunwayPointKind,
-  isPrediction: boolean,
-  isScenario: boolean,
-): string {
+function describe(event: ForecastEvent): string {
+  const isScenario = event.source === 'scenario'
+  const isInvestment = event.scenarioKind === 'investment'
+
+  /*
+   * An investment reads differently on purpose: it names the category, calls
+   * the amount an investment rather than a payment, and says "cash balance" so
+   * it is never mistaken for the value of the holding.
+   */
+  if (isInvestment) {
+    const category = event.scenarioCategory
+      ? `${CATEGORY_LABELS[event.scenarioCategory].toLowerCase()} `
+      : ''
+    return `${formatDisplayDate(event.date)}, hypothetical ${category}investment of ${spokenAmount(
+      event.amount,
+    )}. Resulting cash balance ${formatCurrency(event.balanceAfter)}.`
+  }
+
   const nature = isScenario
     ? 'hypothetical'
-    : isPrediction
+    : event.isPrediction
       ? 'predicted'
       : 'expected'
-  const movement = kind === 'income' ? 'deposit' : 'payment'
-  return `${formatDisplayDate(date)}, ${nature} ${label} ${movement} of ${spokenAmount(
-    amount,
-  )}. Resulting balance ${formatCurrency(balance)}.`
+  const movement = event.kind === 'income' ? 'deposit' : 'payment'
+  return `${formatDisplayDate(event.date)}, ${nature} ${event.label} ${movement} of ${spokenAmount(
+    event.amount,
+  )}. Resulting balance ${formatCurrency(event.balanceAfter)}.`
 }
 
 export function buildRunwaySeries(forecast: ForecastResult): RunwaySeries {
@@ -132,19 +156,20 @@ export function buildRunwaySeries(forecast: ForecastResult): RunwaySeries {
         isLowPoint: event.id === forecast.lowPointEventId,
         isPayday: event.isPrimaryIncome,
         isScenario,
-        headline: headlineFor(event.kind, event.label, isScenario),
+        ...(event.scenarioKind ? { scenarioKind: event.scenarioKind } : {}),
+        ...(event.scenarioCategory
+          ? { scenarioCategory: event.scenarioCategory }
+          : {}),
+        headline: headlineFor(
+          event.kind,
+          event.label,
+          isScenario,
+          event.scenarioKind,
+        ),
         detail: `${formatDisplayDate(event.date)} · ${event.label} ${
           event.amount < 0 ? '−' : '+'
         }${formatCurrency(Math.abs(event.amount))}`,
-        description: describe(
-          event.date,
-          event.label,
-          event.amount,
-          event.balanceAfter,
-          event.kind,
-          event.isPrediction,
-          isScenario,
-        ),
+        description: describe(event),
       }
     }),
   ]

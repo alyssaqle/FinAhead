@@ -28,6 +28,7 @@ interface ForecastScreenProps {
   onSetManualIncome: (date: string, amount: number) => void
   onClearManualIncome: () => void
   onStartScenario: () => void
+  onStartInvestment: () => void
 }
 
 /**
@@ -54,6 +55,7 @@ export function ForecastScreen({
   onSetManualIncome,
   onClearManualIncome,
   onStartScenario,
+  onStartInvestment,
 }: ForecastScreenProps) {
   const income = forecast.nextIncome
   const incomePrediction = predictions.find(
@@ -122,10 +124,19 @@ export function ForecastScreen({
                 }.`}
           </p>
 
-          <button type="button" className="btn btn-primary" onClick={onStartScenario}>
-            Try a what-if purchase
-            <IconArrowRight size={18} />
-          </button>
+          <div className="fc-hero__actions">
+            <button type="button" className="btn btn-primary" onClick={onStartScenario}>
+              Try a what-if purchase
+              <IconArrowRight size={18} />
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onStartInvestment}
+            >
+              Preview an investment
+            </button>
+          </div>
         </div>
       </section>
 

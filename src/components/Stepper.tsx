@@ -1,6 +1,6 @@
 import { IconCheck } from './icons'
 
-export type Stage = 'setup' | 'forecast' | 'scenario'
+export type Stage = 'setup' | 'forecast' | 'scenario' | 'investment'
 
 const STEPS: { id: Stage; label: string }[] = [
   { id: 'setup', label: 'Add information' },
@@ -24,7 +24,13 @@ interface StepperProps {
  * alone.
  */
 export function Stepper({ stage, hasData, onNavigate }: StepperProps) {
-  const activeIndex = STEPS.findIndex((step) => step.id === stage)
+  /*
+   * Investment Preflight is an optional branch off the cash forecast rather
+   * than a step of its own, so it keeps step 2 current instead of adding a
+   * fourth marker the user has to account for.
+   */
+  const resolved = stage === 'investment' ? 'forecast' : stage
+  const activeIndex = STEPS.findIndex((step) => step.id === resolved)
 
   return (
     <nav className="stepper" aria-label="Progress">
