@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "bench": "npm run bench:synthetic && npm run bench:moneydata",
+    "bench:synthetic": "vite-node benchmark/synthetic/main.ts",
+    "bench:moneydata": "vite-node benchmark/moneydata/run.ts && vite-node benchmark/moneydata/run-reviewed.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

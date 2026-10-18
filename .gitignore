@@ -3,3 +3,7 @@ dist
 .DS_Store
 *.local
 coverage
+
+# Benchmark: downloaded datasets and generated output are regenerable
+benchmark/**/.data/
+benchmark/**/.out/
